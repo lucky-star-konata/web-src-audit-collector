@@ -1,1 +1,8 @@
+rules:
+  - id: java-sql-jdbc-concat
+    pattern: |
+      "SELECT * FROM " + $VAR
+    message: SQL string concatenation, potential SQL injection
+    languages: [java]
+    severity: WARNING
 
