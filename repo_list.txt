@@ -2,8 +2,8 @@
 # One git address per line, # for comment
 
 ## PHP Web
-https://github.com/easysoft/zentaopms.git
-https://github.com/emlog/emlog.git
+https://mirror.ghproxy.com/https://github.com/easysoft/zentaopms.git
+https://mirror.ghproxy.com/https://github.com/emlog/emlog.git
 
 ## Java Web
-https://github.com/jeecgboot/JeecgBoot.git
+https://mirror.ghproxy.com/https://github.com/jeecgboot/JeecgBoot.git
