@@ -1,0 +1,18 @@
+# Local source code and scan reports (not push to github)
+source_code/
+audit_output/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+*.log
+*.tmp
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
