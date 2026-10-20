@@ -5,24 +5,23 @@ from utils import init_dir, get_repo_name
 REPO_LIST = "repo_list.txt"
 SAVE_ROOT = Path("./source_code")
 
-def clone_repo(git_url):
+def clone_single(git_url: str):
     repo_name = get_repo_name(git_url)
-    target_path = SAVE_ROOT / repo_name
-    if target_path.exists():
+    target = SAVE_ROOT / repo_name
+    if target.exists():
         print(f"[SKIP] {repo_name} already exists.")
         return
-    print(f"[CLONE] Pulling {git_url} ...")
+    print(f"[CLONE] Pulling {git_url}")
     try:
         subprocess.run(
-            ["git", "clone", git_url, str(target_path)],
+            ["git", "clone", git_url, str(target)],
             timeout=300,
-            check=True
+            capture_output=False
         )
-        print(f"[OK] {repo_name} download complete")
     except Exception as e:
-        print(f"[FAIL] Clone error: {e}")
+        print(f"[FAIL] Clone {git_url} error: {e}")
 
-if __name__ == "__main__":
+def main():
     init_dir()
     with open(REPO_LIST, "r", encoding="utf-8") as f:
         lines = f.readlines()
@@ -30,5 +29,8 @@ if __name__ == "__main__":
         line = line.strip()
         if not line or line.startswith("#"):
             continue
-        clone_repo(line)
-    print("\n==== All clone tasks finished ====")
+        clone_single(line)
+    print("\n[FINISH] All clone tasks done.")
+
+if __name__ == "__main__":
+    main()
