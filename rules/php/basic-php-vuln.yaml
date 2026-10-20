@@ -1,0 +1,18 @@
+rules:
+  - id: php-sql-risk
+    pattern: '$db->query($VAR)'
+    message: Potential SQL injection: variable directly passed into query
+    languages: [php]
+    severity: WARNING
+
+  - id: php-danger-eval
+    pattern: eval($VAR)
+    message: Dangerous eval() function, possible remote code execution
+    languages: [php]
+    severity: ERROR
+
+  - id: php-system-exec
+    pattern: system($VAR)
+    message: Dangerous command execution function system()
+    languages: [php]
+    severity: ERROR
