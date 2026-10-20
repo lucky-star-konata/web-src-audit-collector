@@ -1,16 +1,16 @@
 from pathlib import Path
-import re
+
+SAVE_ROOT = Path("./source_code")
+OUTPUT_ROOT = Path("./audit_output")
 
 def init_dir():
-    Path("./source_code").mkdir(exist_ok=True)
-    Path("./scan_result").mkdir(exist_ok=True)
+    """Create local folder for source and report"""
+    SAVE_ROOT.mkdir(exist_ok=True)
+    OUTPUT_ROOT.mkdir(exist_ok=True)
 
-def get_repo_name(git_url: str):
-    # 从git链接提取仓库名称
-    res = re.search(r"/([^/]+)\.git$", git_url)
-    if res:
-        return res.group(1)
-    res2 = re.search(r"/([^/]+)$", git_url)
-    if res2:
-        return res2.group(1)
-    return "unknown_repo"
+def get_repo_name(git_url: str) -> str:
+    """Extract repo name from git url"""
+    name = git_url.strip().split("/")[-1]
+    if name.endswith(".git"):
+        name = name[:-4]
+    return name
