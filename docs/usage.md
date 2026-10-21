@@ -1,13 +1,13 @@
 # 使用说明
 
-本文档覆盖从环境准备到报告解读的完整流程。所有命令都请在**仓库根目录**执行，保证 `source_code/`、`audit_output/` 落在顶层。
+本文档覆盖从环境准备到报告解读的完整流程。脚本以**仓库根目录**为基准解析路径，因此在任意目录执行都可正常工作。
 
 ## 1. 环境准备
 
 ```bash
 git clone https://github.com/lucky-star-konata/web-src-audit-collector.git
 cd web-src-audit-collector
-python3 -m pip install semgrep
+python3 -m pip install -r requirements.txt
 ```
 
 | 组件 | 检查命令 | 期望结果 |
@@ -77,9 +77,23 @@ audit_output/
 
 > 注意：语言判定是「PHP 优先」。若项目同时含 PHP 与 Java，只会生成 PHP 报告；需要两者都扫时，把脚本中的 `elif` 改为两个独立 `if`。
 
-## 5. 解读报告
+## 5. 生成汇总 `scripts/summary_report.py`
 
-报告是标准 Semgrep JSON，关键字段在 `results[]`：`check_id`（规则 ID）、`path`、`start.line`、`extra.message`。
+```bash
+python3 scripts/summary_report.py
+```
+
+读取 `audit_output/*_report.json`，输出 `audit_output/summary.md`，包含：
+
+- 项目概览表（各等级命中数）
+- 规则命中排行（Top 20）
+- 每个项目的命中明细（`路径:行号` + 规则 ID + 说明，单项目最多展示 200 条）
+
+单个报告 JSON 损坏时会打印 `[WARN]` 并跳过，不影响其余报告。
+
+## 6. 解读报告
+
+报告是标准 Semgrep JSON，关键字段在 `results[]`：`check_id`（规则 ID）、`path`、`start.line`、`extra.message`、`extra.severity`。
 
 ```bash
 # 每个规则的命中数量
@@ -89,7 +103,7 @@ jq -r '.results[] | .check_id' audit_output/*.json | sort | uniq -c | sort -rn
 jq -r '.results[] | "\(.path):\(.start.line) [\(.check_id)]"' audit_output/*.json
 ```
 
-## 6. 清理本地源码 `scripts/clean_source.sh`
+## 7. 清理本地源码 `scripts/clean_source.sh`
 
 ```bash
 bash scripts/clean_source.sh
@@ -97,14 +111,14 @@ bash scripts/clean_source.sh
 
 会二次确认后清空 `source_code/*`，保留 `audit_output/`。
 
-## 7. 自定义规则
+## 8. 自定义规则
 
 1. 在 `rules/<语言>/` 下新建 yaml（参考现有文件格式）：
 
 ```yaml
 rules:
   - id: php-file-include
-    pattern: include($VAR)
+    pattern: include $ARG;
     message: 变量直接进入 include，可能存在本地文件包含
     languages: [php]
     severity: WARNING
@@ -116,15 +130,20 @@ rules:
 semgrep scan --config rules --json "${project}" > "${OUTPUT_DIR}/${project_name}_report.json"
 ```
 
+> 元变量以大写字母开头（如 `$ARG`、`$OBJ`）；小写形式（如 `$db`）在 PHP 中会被当作字面变量名，不会匹配任意变量。这是编写规则时最常见的失效原因。
+
 ## 常见问题
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
 | 克隆超时 / Connection reset | 直连 GitHub 被限速 | 使用 `ghproxy` 等镜像前缀；或配置代理 |
-| `semgrep not found` | 未安装 / 不在 PATH | `python3 -m pip install semgrep` 后重试 |
+| `semgrep not found` | 未安装 / 不在 PATH | `python3 -m pip install -r requirements.txt` 后重试 |
 | `source_code not found` | 未先克隆 | 先执行 `batch_clone.py` |
 | 项目被跳过，无报告 | 未识别到 php / java 文件 | 确认目录结构，或按需扩展语言判定 |
-| `import utils` 报错 | 工作目录不对 | 在仓库根目录用 `python3 scripts/batch_clone.py` 运行 |
+| `summary_report.py` 提示无报告 | `audit_output/` 为空 | 先执行 `semgrep_batch_scan.sh` |
+| semgrep 卡住不动 | 版本检查 / 指标上报走了外网 | 脚本已内置 `--metrics off --disable-version-check`；仍卡住请检查代理设置 |
+| `import utils` 报错 | 直接 `python batch_clone.py` 且未把 scripts 加入路径 | 用 `python3 scripts/batch_clone.py` 运行 |
+| 规则命中为 0 | 元变量写成了小写，或规则语法不匹配 | 用 `semgrep --validate --config rules/php/basic-php-vuln.yaml` 校验 |
 
 ## 免责声明
 

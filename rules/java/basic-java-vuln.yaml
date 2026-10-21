@@ -1,8 +1,31 @@
 rules:
-  - id: java-sql-jdbc-concat
-    pattern: |
-      "SELECT * FROM " + $VAR
-    message: SQL string concatenation, potential SQL injection
+  - id: java-sql-statement-concat
     languages: [java]
     severity: WARNING
+    message: SQL 语句由字符串拼接构造，若参数可控则存在 SQL 注入风险
+    patterns:
+      - pattern-either:
+          - pattern: $STMT.executeQuery("..." + ...)
+          - pattern: $STMT.executeUpdate("..." + ...)
+          - pattern: $STMT.execute("..." + ...)
+          - pattern: $STMT.executeQuery(... + "...")
+          - pattern: $STMT.executeUpdate(... + "...")
+          - pattern: $STMT.execute(... + "...")
 
+  - id: java-runtime-exec
+    languages: [java]
+    severity: ERROR
+    message: Runtime.exec 命令执行，若参数可控可导致远程命令执行
+    pattern: Runtime.getRuntime().exec(...)
+
+  - id: java-process-builder
+    languages: [java]
+    severity: WARNING
+    message: 使用 ProcessBuilder 启动外部进程，需确认命令参数是否可控
+    pattern: new ProcessBuilder(...)
+
+  - id: java-deserialization
+    languages: [java]
+    severity: WARNING
+    message: 创建 ObjectInputStream，反序列化不可信数据可导致代码执行
+    pattern: new ObjectInputStream(...)

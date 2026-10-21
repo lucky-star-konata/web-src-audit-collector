@@ -1,10 +1,6 @@
 import subprocess
 import shutil
-from pathlib import Path
-from utils import init_dir, get_repo_name
-
-REPO_LIST = "repo_list.txt"
-SAVE_ROOT = Path("./source_code")
+from utils import init_dir, get_repo_name, REPO_LIST, SAVE_ROOT
 
 def clone_single(git_url: str) -> str:
     """Clone one repo. Returns one of: created / skipped / failed."""
@@ -33,6 +29,8 @@ def clone_single(git_url: str) -> str:
 
 def main():
     init_dir()
+    if not REPO_LIST.exists():
+        raise SystemExit(f"[!] {REPO_LIST} not found")
     with open(REPO_LIST, "r", encoding="utf-8") as f:
         lines = f.readlines()
     stats = {"created": 0, "skipped": 0, "failed": 0}

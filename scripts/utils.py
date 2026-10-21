@@ -1,7 +1,10 @@
 from pathlib import Path
 
-SAVE_ROOT = Path("./source_code")
-OUTPUT_ROOT = Path("./audit_output")
+# 以仓库根目录为基准，保证在任意工作目录下运行脚本行为一致
+ROOT = Path(__file__).resolve().parent.parent
+SAVE_ROOT = ROOT / "source_code"
+OUTPUT_ROOT = ROOT / "audit_output"
+REPO_LIST = ROOT / "repo_list.txt"
 
 def init_dir():
     """Create local folder for source and report"""

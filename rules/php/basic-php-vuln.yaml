@@ -1,18 +1,57 @@
 rules:
-  - id: php-sql-risk
-    pattern: '$db->query($VAR)'
-    message: Potential SQL injection: variable directly passed into query
+  - id: php-sql-query-variable
     languages: [php]
     severity: WARNING
+    message: 查询语句由变量传入，若变量来自用户输入则存在 SQL 注入风险
+    patterns:
+      - pattern-either:
+          - pattern: $OBJ->query($SQL)
+          - pattern: $OBJ->exec($SQL)
+          - pattern: mysqli_query($CONN, $SQL)
+          - pattern: mysql_query($SQL)
+      - pattern-not: $OBJ->query("...")
+      - pattern-not: $OBJ->exec("...")
+      - pattern-not: mysqli_query($CONN, "...")
+      - pattern-not: mysql_query("...")
 
   - id: php-danger-eval
-    pattern: eval($VAR)
-    message: Dangerous eval() function, possible remote code execution
     languages: [php]
     severity: ERROR
+    message: 使用了 eval()，若参数可控可导致远程代码执行
+    pattern: eval(...)
 
-  - id: php-system-exec
-    pattern: system($VAR)
-    message: Dangerous command execution function system()
+  - id: php-danger-command-exec
     languages: [php]
     severity: ERROR
+    message: 使用了命令执行函数，若参数可控可导致命令执行
+    patterns:
+      - pattern-either:
+          - pattern: system(...)
+          - pattern: exec(...)
+          - pattern: shell_exec(...)
+          - pattern: passthru(...)
+          - pattern: popen(...)
+          - pattern: proc_open(...)
+
+  - id: php-danger-unserialize
+    languages: [php]
+    severity: ERROR
+    message: 反序列化不可信数据，存在对象注入风险
+    pattern: unserialize(...)
+
+  - id: php-file-include
+    languages: [php]
+    severity: WARNING
+    message: 变量直接进入 include/require，可能存在本地或远程文件包含
+    patterns:
+      - pattern-either:
+          - pattern: include $ARG;
+          - pattern: include_once $ARG;
+          - pattern: require $ARG;
+          - pattern: require_once $ARG;
+
+  - id: php-file-upload
+    languages: [php]
+    severity: WARNING
+    message: 文件上传落盘点，需确认后缀与目录是否可控
+    pattern: move_uploaded_file($TMP, $DEST)
