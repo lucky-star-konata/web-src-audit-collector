@@ -87,11 +87,11 @@ bash scripts/clean_source.sh
 
 | 规则 ID | 匹配内容 | 等级 |
 | --- | --- | --- |
-| `php-sql-query-variable` | `query()` / `exec()` / `mysqli_query()` 参数为变量 | WARNING |
+| `php-sqli-taint` | 污点追踪：`$_GET/$_POST/$_REQUEST/$_COOKIE` 流入 `query()` / `exec()` / `mysqli_query()` | ERROR |
+| `php-lfi-taint` | 污点追踪：superglobal 流入 `include` / `require` | ERROR |
 | `php-danger-eval` | `eval(...)` | ERROR |
 | `php-danger-command-exec` | `system` / `exec` / `shell_exec` / `passthru` / `popen` / `proc_open` | ERROR |
 | `php-danger-unserialize` | `unserialize(...)` | ERROR |
-| `php-file-include` | `include` / `require` 参数为变量 | WARNING |
 | `php-file-upload` | `move_uploaded_file(...)` 文件落盘点 | WARNING |
 
 `rules/java/basic-java-vuln.yaml`

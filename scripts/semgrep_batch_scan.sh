@@ -24,8 +24,9 @@ fi
 
 mkdir -p "${OUTPUT_DIR}"
 
-# 公共扫描参数：关闭指标上报与版本检查，避免受限网络下卡住；保持规则 ID 与文档一致
-SEMGREP_OPTS=(--metrics off --disable-version-check --no-rewrite-rule-ids)
+# 公共扫描参数：关闭指标上报与版本检查，避免受限网络下卡住；保持规则 ID 与文档一致；
+# 排除第三方依赖目录，降低 vendor 噪声
+SEMGREP_OPTS=(--metrics off --disable-version-check --no-rewrite-rule-ids --exclude vendor --exclude node_modules)
 
 found=0
 for project in "${SRC_DIR}"/*/

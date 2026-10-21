@@ -117,11 +117,11 @@ bash scripts/clean_source.sh
 
 ```yaml
 rules:
-  - id: php-file-include
-    pattern: include $ARG;
-    message: 变量直接进入 include，可能存在本地文件包含
+  - id: php-include-userinput
+    pattern: include $_GET[...];
+    message: 用户输入直接进入 include，可能存在文件包含
     languages: [php]
-    severity: WARNING
+    severity: ERROR
 ```
 
 2. 在 `semgrep_batch_scan.sh` 顶部把对应变量指向新文件，或直接改成扫描整个 `rules/` 目录：
@@ -131,6 +131,10 @@ semgrep scan --config rules --json "${project}" > "${OUTPUT_DIR}/${project_name}
 ```
 
 > 元变量以大写字母开头（如 `$ARG`、`$OBJ`）；小写形式（如 `$db`）在 PHP 中会被当作字面变量名，不会匹配任意变量。这是编写规则时最常见的失效原因。
+
+### 关于污点模式
+
+`php-sqli-taint`、`php-lfi-taint` 使用 semgrep 的 `mode: taint`，只报告「用户输入确实流到危险函数」的路径，因此不会把 `include 'header.php'`、`$db->query($sql)`（`$sql` 为常量）这类正常写法算作命中。相比纯 `pattern` 匹配，噪声低一个数量级，但也可能漏掉经过自定义过滤函数的间接流入——需要时可在 `pattern-sources` 里补充来源函数。
 
 ## 常见问题
 
