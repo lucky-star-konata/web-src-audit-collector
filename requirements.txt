@@ -1,0 +1,3 @@
+# Python dependencies for web-src-audit-collector
+# Install: python3 -m pip install -r requirements.txt
+semgrep

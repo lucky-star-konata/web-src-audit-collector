@@ -17,23 +17,24 @@ if [ ! -d "${SRC_DIR}" ];then
     exit 1
 fi
 
-mkdir -p ${OUTPUT_DIR}
+mkdir -p "${OUTPUT_DIR}"
 
-for project in ${SRC_DIR}/*/
+for project in "${SRC_DIR}"/*/
 do
-    project_name=$(basename ${project})
+    [ -d "${project}" ] || continue
+    project_name=$(basename "${project}")
     echo -e "\n[+] Start scanning project: ${project_name}"
 
-    # 统计php和java文件数量，智能判断项目类型，比原来的判断靠谱很多
-    PHP_COUNT=$(find "${project}" -type f -name "*.php" | wc -l)
-    JAVA_COUNT=$(find "${project}" -type f -name "*.java" | wc -l)
+    # 统计php和java文件数量，智能判断项目类型
+    PHP_COUNT=$(find "${project}" -type f -name "*.php" | wc -l | tr -d ' ')
+    JAVA_COUNT=$(find "${project}" -type f -name "*.java" | wc -l | tr -d ' ')
 
-    if [ ${PHP_COUNT} -gt 0 ];then
-        echo "[*] Detected PHP project, use php rules"
-        semgrep scan --config ${PHP_RULE} --json "${project}" > ${OUTPUT_DIR}/${project_name}_php_report.json
-    elif [ ${JAVA_COUNT} -gt 0 ];then
-        echo "[*] Detected Java project, use java rules"
-        semgrep scan --config ${JAVA_RULE} --json "${project}" > ${OUTPUT_DIR}/${project_name}_java_report.json
+    if [ "${PHP_COUNT}" -gt 0 ];then
+        echo "[*] Detected PHP project (${PHP_COUNT} files), use php rules"
+        semgrep scan --config "${PHP_RULE}" --json "${project}" > "${OUTPUT_DIR}/${project_name}_php_report.json"
+    elif [ "${JAVA_COUNT}" -gt 0 ];then
+        echo "[*] Detected Java project (${JAVA_COUNT} files), use java rules"
+        semgrep scan --config "${JAVA_RULE}" --json "${project}" > "${OUTPUT_DIR}/${project_name}_java_report.json"
     else
         echo "[!] Cannot identify language, skip ${project_name}"
     fi

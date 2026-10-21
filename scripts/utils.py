@@ -9,8 +9,8 @@ def init_dir():
     OUTPUT_ROOT.mkdir(exist_ok=True)
 
 def get_repo_name(git_url: str) -> str:
-    """Extract repo name from git url"""
-    name = git_url.strip().split("/")[-1]
+    """Extract repo name from git url (handles trailing slash and .git suffix)"""
+    name = git_url.strip().rstrip("/").split("/")[-1]
     if name.endswith(".git"):
         name = name[:-4]
     return name
