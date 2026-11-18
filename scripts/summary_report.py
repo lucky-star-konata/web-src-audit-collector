@@ -1,12 +1,24 @@
+import argparse
 import json
 import sys
 from collections import Counter
-from pathlib import Path
+from datetime import datetime
 
-from utils import OUTPUT_ROOT
+from utils import OUTPUT_ROOT, VERSION, project_relative
 
 SEVERITY_ORDER = ["ERROR", "WARNING", "INFO"]
 MAX_FINDINGS_PER_PROJECT = 200
+
+
+def parse_report_name(path):
+    """从 `<项目>_<语言>_report.json` 拆出项目名与语言"""
+    stem = path.stem
+    if stem.endswith("_report"):
+        stem = stem[: -len("_report")]
+    for suffix in ("_php", "_java"):
+        if stem.endswith(suffix):
+            return stem[: -len(suffix)], suffix[1:]
+    return stem, "unknown"
 
 
 def load_reports():
@@ -22,8 +34,10 @@ def load_reports():
 
         results = data.get("results") or []
         stats = Counter(r.get("extra", {}).get("severity", "INFO") for r in results)
+        name, language = parse_report_name(path)
         reports.append({
-            "name": path.stem.replace("_report", ""),
+            "name": name,
+            "language": language,
             "file": path.name,
             "results": results,
             "stats": stats,
@@ -33,21 +47,23 @@ def load_reports():
 
 def build_markdown(reports):
     total = sum(len(r["results"]) for r in reports)
+    project_count = len({r["name"] for r in reports})
     lines = [
         "# 扫描汇总报告",
         "",
-        f"- 项目数：{len(reports)}",
+        f"- 生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"- 项目数：{project_count}（报告 {len(reports)} 份，按语言拆分）",
         f"- 命中总数：{total}",
         "",
         "## 项目概览",
         "",
-        "| 项目 | ERROR | WARNING | INFO | 合计 |",
-        "| --- | ---: | ---: | ---: | ---: |",
+        "| 项目 | 语言 | ERROR | WARNING | INFO | 合计 |",
+        "| --- | --- | ---: | ---: | ---: | ---: |",
     ]
     for r in reports:
         s = r["stats"]
         lines.append(
-            f"| {r['name']} | {s.get('ERROR', 0)} | {s.get('WARNING', 0)} "
+            f"| {r['name']} | {r['language']} | {s.get('ERROR', 0)} | {s.get('WARNING', 0)} "
             f"| {s.get('INFO', 0)} | {len(r['results'])} |"
         )
 
@@ -65,14 +81,16 @@ def build_markdown(reports):
     for r in reports:
         if not r["results"]:
             continue
-        lines.append(f"### {r['name']}")
+        lines.append(f"### {r['name']}（{r['language']}）")
         lines.append("")
         shown = r["results"][:MAX_FINDINGS_PER_PROJECT]
         for item in shown:
             sev = item.get("extra", {}).get("severity", "INFO")
             msg = item.get("extra", {}).get("message", "").strip().replace("\n", " ")
+            rel_path = project_relative(item.get("path", ""), r["name"])
+            line = (item.get("start") or {}).get("line")
             lines.append(
-                f"- **[{sev}]** `{item.get('path')}:{item.get('start', {}).get('line')}` "
+                f"- **[{sev}]** `{rel_path}:{line}` "
                 f"`{item.get('check_id')}` — {msg}"
             )
         if len(r["results"]) > len(shown):
@@ -83,6 +101,10 @@ def build_markdown(reports):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="把 semgrep JSON 报告汇总为 Markdown")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+    parser.parse_args()
+
     reports = load_reports()
     if not reports:
         print(f"[!] No report found in {OUTPUT_ROOT}, run semgrep_batch_scan.sh first.")
