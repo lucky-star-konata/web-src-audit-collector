@@ -1,8 +1,10 @@
 # web-src-audit-collector
 
+[![CI](https://github.com/lucky-star-konata/web-src-audit-collector/actions/workflows/ci.yml/badge.svg)](https://github.com/lucky-star-konata/web-src-audit-collector/actions/workflows/ci.yml)
+
 批量拉取开源 Web 项目源码，并用 Semgrep 规则做静态扫描，用于代码审计学习与漏洞模式积累。
 
-当前版本：**v1.1.0**
+当前版本：**v1.1.1**
 
 > 仅用于**授权范围内**的代码审计学习。详见 [DISCLAIMER.md](./DISCLAIMER.md)。
 
