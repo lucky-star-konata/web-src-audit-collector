@@ -39,6 +39,43 @@ class UtilsTests(unittest.TestCase):
     def test_repo_name(self):
         self.assertEqual(utils.get_repo_name("https://github.com/a/b.git/"), "b")
 
+    def test_repo_name_rejects_traversal(self):
+        with self.assertRaises(ValueError):
+            utils.get_repo_name("https://github.com/a/..")
+
+    def test_validate_git_url_accepts_common_schemes(self):
+        for url in (
+            "https://github.com/a/b.git",
+            "http://git.example.com/a/b.git",
+            "ssh://git@example.com/a/b.git",
+            "git@github.com:a/b.git",
+        ):
+            self.assertEqual(utils.validate_git_url(url), url)
+
+    def test_validate_git_url_rejects_ext_transport(self):
+        with self.assertRaises(ValueError):
+            utils.validate_git_url("ext::sh -c touch% /tmp/pwned")
+
+    def test_validate_git_url_rejects_option_injection(self):
+        with self.assertRaises(ValueError):
+            utils.validate_git_url("--upload-pack=calc.exe")
+
+    def test_batch_clone_dry_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_list = Path(tmp) / "repos.txt"
+            repo_list.write_text(
+                "https://github.com/a/demo.git\next::sh -c id\n", encoding="utf-8",
+            )
+            result = subprocess.run(
+                [PY, str(SCRIPTS / "batch_clone.py"),
+                 "--repo-list", str(repo_list), "--dry-run"],
+                cwd=ROOT, capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("[DRY-RUN]", result.stdout)
+        self.assertIn("[FAIL]", result.stdout)
+
     def test_project_relative_windows_path(self):
         raw = "C:\\src\\source_code\\demo\\admin\\index.php"
         self.assertEqual(utils.project_relative(raw, "demo"), "admin/index.php")

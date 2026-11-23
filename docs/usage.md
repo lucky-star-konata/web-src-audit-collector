@@ -16,7 +16,7 @@ python3 -m pip install -r requirements.txt
 | python | `python3 --version` | >= 3.8 |
 | semgrep | `semgrep --version` | 输出版本号 |
 
-> 当前版本 v1.1.0，可用 `python3 scripts/batch_clone.py --version` 或 `bash scripts/semgrep_batch_scan.sh --version` 查看。
+> 当前版本 v1.2.0，可用 `python3 scripts/batch_clone.py --version` 或 `bash scripts/semgrep_batch_scan.sh --version` 查看。
 > Windows 用户：`.sh` 脚本需在 WSL 或 Git Bash 中运行；`python3` 可为 `python`。
 
 ## 2. 配置目标仓库 `repo_list.txt`
@@ -31,11 +31,14 @@ https://mirror.ghproxy.com/https://github.com/emlog/emlog.git
 
 - 建议加镜像前缀（`https://mirror.ghproxy.com/`），避免直连 GitHub 超时或被限速。
 - 地址必须以 `.git` 结尾或能被 `git clone` 直接识别。
+- 出于安全考虑，只接受 `http/https/ssh/git` 协议与 `git@host:path` 形式；
+  `ext::` 等会执行本地命令的传输方式、以 `-` 开头的地址会被直接拒绝（防止清单被替换后 RCE）。
 
 ## 3. 批量克隆 `scripts/batch_clone.py`
 
 ```bash
 python3 scripts/batch_clone.py
+python3 scripts/batch_clone.py --dry-run          # 只校验地址并打印克隆计划
 python3 scripts/batch_clone.py --depth 1          # 浅克隆，只取最新提交
 python3 scripts/batch_clone.py --retry 2 --timeout 600
 python3 scripts/batch_clone.py --repo-list other.txt
